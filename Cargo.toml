@@ -1,0 +1,30 @@
+[package]
+name = "BackEnd"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+rocket = { version = "0.5.0-rc.1", default-features = false, features = ["json"] }
+rocket_cors = { version = "0.6.0-alpha1", default-features = false }
+tokio = { version = "1", features = ["full"] }
+tokio-postgres = "0.7.11"
+scrypt = { version = "0.8.1", default-features = true }
+chrono = { version = "0.4.38", features = ["serde"] }
+diesel = { version = "2.2.0", features = ["postgres", "chrono"] }
+# build libpq and openssl as part of the build process
+# uncomment these lines if you run into setup issues
+# pq-sys = { version = "0.6", features = ["bundled"] }
+# openssl-sys = { version = "0.9.100", features = ["vendored"] } 
+dotenvy = "0.15"
+validator = "0.14.0"
+validator_derive = "0.14.0"
+jsonwebtoken = "7.2.0"
+
+
+[dependencies.rocket_sync_db_pools]
+version = "0.1.0-rc.1"
+default-features = false
+features = ["diesel_postgres_pool"]
