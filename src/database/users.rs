@@ -1,4 +1,4 @@
-use crate::models::user::{self, User, UserFiltering};
+use crate::models::user::{User, UserFiltering};
 use crate::schema::users;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
@@ -91,31 +91,43 @@ pub fn get_users(
     use crate::schema::users::dsl::*;
 
     // let mut query = users.into_boxed();
+    println!("filtlers {:?}", filters);
 
     if let Some(f) = filters {
         let mut query = users.into_boxed();
-
-        // if !f.username.is_empty() {
-        //     query = query.filter(username.eq(f.username.as_str()));
-        // }
+        if !f.username.is_empty() {
+            query = query.filter(username.eq(f.username.as_str()));
+        }
         if !f.email.is_empty() {
-            // let d = f.email.clone();
             query = query.filter(email.eq(f.email));
         }
-        // if !f.id{
-        //     query = query.filter(id.eq(f.id));
-        // }
+        //In Rust, integers (like i32, u32, etc.) cannot be null because Rust does not allow null values in its type system.
+        //Instead, Rust uses the Option type to represent values that may or may not be present.
+        //For example, an integer that might be "null" would be represented as Option<i32> or Option<u32>.
+        if Some(f.id).is_some() {
+            query = query.filter(id.eq(f.id));
+        }
+        if Some(f.limit).is_some() {
+            query = query.limit(f.limit);
+        }
         query
-        .limit(5) // Limit to 5 results
-        .load::<User>(conn) // Load results into Vec<User>
+            .limit(5) // Limit to 5 results
+            .load::<User>(conn) // Load results into Vec<User>
     } else {
-        let mut query = users.into_boxed();
-        query
-        .limit(5) // Limit to 5 results
-        .load::<User>(conn) // Load results into Vec<User>
-    }
+        let results = users
+            .limit(5)
+            // .select(User::as_select())
+            .load::<User>(conn) // Load results into Vec<User>
+            .expect("Error loading users");
 
-    
+        println!("Displaying {} users", results.len());
+        for user in &results {
+            println!("{}", user.username);
+            println!("-----------\n");
+            println!("{}", user.email);
+        }
+        Ok(results)
+    }
 }
 
 pub fn find(conn: &mut PgConnection, id: i32) -> Option<User> {
@@ -150,10 +162,12 @@ pub fn update(conn: &mut PgConnection, id: i32, data: &UpdateUserData) -> Option
         .ok()
 }
 
-pub fn delete_user(conn: &mut PgConnection, id: i32)  {
-    let user_deleted = diesel::delete(users::table.find(id))
+pub fn delete(conn: &mut PgConnection, id: i32) -> Result<usize, Error>{
+    let user_deleted = diesel::delete(users::table.filter(users::id.eq(id)))
         .execute(conn)
         .expect("Error deleting user");
 
     println!("Deleted {} user", user_deleted);
+
+    Ok(user_deleted)
 }

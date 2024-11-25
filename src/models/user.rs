@@ -2,8 +2,8 @@ use crate::auth::Auth;
 use chrono::{Duration, Utc};
 use rocket::serde::Deserialize;
 
-use serde::Serialize;
 use diesel::Queryable;
+use serde::Serialize;
 type Url = String;
 use rocket::form::FromForm;
 
@@ -17,14 +17,13 @@ pub struct User {
     pub hash: String,
 }
 
-
-
-#[derive(FromForm, Deserialize)]
+#[derive(FromForm, Deserialize, Debug)]
 
 pub struct UserFiltering {
     pub id: i32,
     pub username: String,
-    pub email: String
+    pub email: String,
+    pub limit: i64,
 }
 
 #[derive(Serialize)]

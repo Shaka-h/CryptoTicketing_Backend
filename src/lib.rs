@@ -8,7 +8,6 @@ extern crate rocket_sync_db_pools;
 extern crate rocket_cors;
 use rocket_cors::{Cors, CorsOptions};
 
-#[macro_use]
 extern crate diesel;
 
 #[macro_use]
@@ -47,7 +46,8 @@ pub fn rocket() -> rocket::Rocket<rocket::Build> {
             routes![
                 routes::users::add_user,
                 routes::users::get_users,
-                // routes::users::get_users,
+                routes::users::update_user,
+                routes::users::delete_user,
             ],
         )
         .attach(database::Db::fairing())

@@ -1,9 +1,9 @@
 pub mod users;
+pub mod events;
 
 #[database("diesel_postgres_pool")]
 pub struct Db(diesel::PgConnection);
 
-use diesel::pg::Pg;
 use diesel::prelude::*;
 use diesel::query_builder::*;
 use diesel::query_dsl::methods::LoadQuery;
