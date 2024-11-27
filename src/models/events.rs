@@ -7,7 +7,7 @@ use rocket::form::FromForm;
 
 use crate::database::events::EventType;
 
-#[derive(Queryable)]
+#[derive(Queryable, Serialize)]
 pub struct Event {
     pub id: i32,
     pub userid: i32,
@@ -29,11 +29,11 @@ pub struct EventFiltering {
     pub userid: i32,
     pub eventname: String,
     pub eventdate: String,
-    pub eventdatetime: String,
-    // pub eventtype: EventType,
+    pub eventtype: EventType,
     pub eventcountry: String,
     pub eventcity: String,
     pub eventplace: String,
+    pub limit: i64,
 }
 
 #[derive(Serialize)]
@@ -41,3 +41,4 @@ pub struct Profile {
     id: i32,
     likes: i32,
 }
+

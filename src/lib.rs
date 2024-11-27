@@ -48,6 +48,8 @@ pub fn rocket() -> rocket::Rocket<rocket::Build> {
                 routes::users::get_users,
                 routes::users::update_user,
                 routes::users::delete_user,
+                routes::events::add_event,
+                routes::events::get_events,
             ],
         )
         .attach(database::Db::fairing())

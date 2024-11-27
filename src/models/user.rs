@@ -18,12 +18,11 @@ pub struct User {
 }
 
 #[derive(FromForm, Deserialize, Debug)]
-
 pub struct UserFiltering {
-    pub id: i32,
-    pub username: String,
-    pub email: String,
-    pub limit: i64,
+    pub id: Option<i32>,        // Optional user ID
+    pub username: Option<String>, // Optional username
+    pub email: Option<String>,   // Optional email
+    pub limit: Option<i64>,      // Optional limit
 }
 
 #[derive(Serialize)]

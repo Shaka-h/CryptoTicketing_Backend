@@ -95,21 +95,22 @@ pub fn get_users(
 
     if let Some(f) = filters {
         let mut query = users.into_boxed();
-        if !f.username.is_empty() {
-            query = query.filter(username.eq(f.username.as_str()));
+        if let Some(ref username_filter) = f.username  {
+            query = query.filter(username.eq(username_filter));
         }
-        if !f.email.is_empty() {
-            query = query.filter(email.eq(f.email));
+        if let Some(ref email_filter) = f.email {
+            query = query.filter(email.eq(email_filter));
+        }
+        if let Some(id_filter) = f.id {
+            query = query.filter(id.eq(id_filter));
+        }
+        if let Some(limit_filter) = f.limit {
+            query = query.limit(limit_filter);
         }
         //In Rust, integers (like i32, u32, etc.) cannot be null because Rust does not allow null values in its type system.
         //Instead, Rust uses the Option type to represent values that may or may not be present.
         //For example, an integer that might be "null" would be represented as Option<i32> or Option<u32>.
-        if Some(f.id).is_some() {
-            query = query.filter(id.eq(f.id));
-        }
-        if Some(f.limit).is_some() {
-            query = query.limit(f.limit);
-        }
+        
         query
             .limit(5) // Limit to 5 results
             .load::<User>(conn) // Load results into Vec<User>

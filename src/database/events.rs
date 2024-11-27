@@ -8,9 +8,13 @@ use diesel::{prelude::*, serialize};
 use diesel::result::{DatabaseErrorKind, Error};
 use diesel::serialize::{IsNull, Output, ToSql};
 use diesel::sql_types::Text;
+use serde::{Deserialize, Serialize};
 use std::io::Write;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, AsExpression, FromSqlRow)]
+use rocket::form::FromFormField;
+use std::str::FromStr;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, AsExpression, FromSqlRow, Deserialize, Serialize)]
 #[diesel(sql_type = Text)]
 pub enum EventType {
     Music,
@@ -18,6 +22,30 @@ pub enum EventType {
     Performing,
     Movies,
     Tour,
+}
+
+impl FromStr for EventType {
+    type Err = ();
+
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        match input.to_lowercase().as_str() {
+            "music" => Ok(EventType::Music),
+            "games" => Ok(EventType::Games),
+            "performing" => Ok(EventType::Performing),
+            "movies" => Ok(EventType::Movies),
+            "tour" => Ok(EventType::Tour),
+            _ => Err(()),
+        }
+    }
+}
+
+#[rocket::async_trait]
+impl<'v> FromFormField<'v> for EventType {
+    fn from_value(field: rocket::form::ValueField<'v>) -> rocket::form::Result<'v, Self> {
+        field.value.parse::<Self>().map_err(|_| {
+            rocket::form::Errors::from(rocket::form::Error::validation("invalid event type"))
+        })
+    }
 }
 
 impl ToSql<Text, diesel::pg::Pg> for EventType {
@@ -99,30 +127,29 @@ pub fn create(
         .map_err(Into::into)
 }
 
-// pub fn get_users(
-//     conn: &mut PgConnection,
-//     filters: Option<EventFiltering>,
-// ) -> Result<Vec<Event>, diesel::result::Error> {
-//     use crate::schema::events::dsl::*;
+pub fn get_events(
+    conn: &mut PgConnection,
+    filters: Option<EventFiltering>,
+) -> Result<Vec<Event>, diesel::result::Error> {
+    use crate::schema::events::dsl::*;
 
-//     // let mut query = users.into_boxed();
-//     println!("filtlers {:?}", filters);
+    println!("filtlers {:?}", filters);
 
-//     if let Some(f) = filters {
-//         let mut query = events.into_boxed();
+    if let Some(f) = filters {
+        let mut query = events.into_boxed();
 
-//         query
-//             .limit(5) // Limit to 5 results
-//             .load::<Event>(conn) // Load results into Vec<User>
-//     } else {
-//         let results = events
-//             .limit(5)
-//             // .select(User::as_select())
-//             .load::<Event>(conn) // Load results into Vec<User>
-//             .expect("Error loading users");
-//         Ok(results)
-//     }
-// }
+        query
+            .limit(5) // Limit to 5 results
+            .load::<Event>(conn) // Load results into Vec<User>
+    } else {
+        let results = events
+            .limit(5)
+            // .select(User::as_select())
+            .load::<Event>(conn) // Load results into Vec<User>
+            .expect("Error loading users");
+        Ok(results)
+    }
+}
 
 // // TODO: remove clone when diesel will allow skipping fields
 // #[derive(Deserialize, AsChangeset, Default, Clone, Validate)]

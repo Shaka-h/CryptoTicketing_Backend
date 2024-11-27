@@ -1,18 +1,15 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-use rocket::serde::{
-    Deserialize, Serialize,
-    json::{json, Json, Value},
-};
 use crate::database::{self, users::UserCreationError, Db};
 use crate::errors::{Errors, FieldValidator};
-use crate::{
-    config::AppState,
-    models::user::UserFiltering,
+use crate::{config::AppState, models::user::UserFiltering};
+use rocket::serde::{
+    json::{json, Json, Value},
+    Deserialize, Serialize,
 };
 use rocket::State;
 
-#[derive(Serialize, Deserialize, Clone, Validate)]
+#[derive(Deserialize, Clone, Validate)]
 struct NewUserData {
     id: Option<i32>,
     #[validate(length(min = 1))]
@@ -57,30 +54,17 @@ pub async fn add_user(
     .await
 }
 
-#[get("/get_users?<username>&<user_id>&<email>")]
+#[get("/get_users?<filters..>")]
 pub async fn get_users(
     db: Db,
-    user_id: i32,
-    username: String,
-    email: String,
+    filters: Option<UserFiltering>, // Struct to capture all query parameters
 ) -> Result<Value, Errors> {
-    // let filters = filters.map(|f| f.into_inner());
     db.run(move |conn| {
-        database::users::get_users(
-            conn,
-            Some(UserFiltering {
-                id: user_id,
-                username,
-                email,
-                limit: 100,
-            }),
-        )
-        .map(|users| json!({ "users": users }))
-        .map_err(|_| Errors::new(&[("database", "failed to fetch users")]))
+        database::users::get_users(conn, filters)
+            .map(|users| json!({ "users": users }))
+            .map_err(|_| Errors::new(&[("database", "failed to fetch users")]))
     })
     .await
-
-    // Ok(format!("Users"))
 }
 
 #[derive(Deserialize)]
