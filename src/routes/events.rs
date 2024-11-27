@@ -67,33 +67,16 @@ pub async fn add_event(
     .await
 }
 
-#[get("/get_events?<eventid>&<userid>&<eventname>&<eventdate>&<eventtype>&<eventcountry>&<eventcity>&<eventplace>")]
+#[get("/get_events?<filters..>")]
 pub async fn get_events(
     db: Db,
-    eventid: i32,
-    userid: i32,
-    eventname: String,
-    eventdate: String,
-    eventtype: EventType,
-    eventcountry: String,
-    eventcity: String,
-    eventplace: String,
+    filters: Option<EventFiltering>
 ) -> Result<Value, Errors> {
     // let filters = filters.map(|f| f.into_inner());
     db.run(move |conn| {
         database::events::get_events(
             conn,
-            Some(EventFiltering {
-                id: eventid,
-                userid,
-                eventname,
-                eventdate,
-                eventtype,
-                eventcountry,
-                eventcity,
-                eventplace,
-                limit: 100,
-            }),
+            filters,
         )
         .map(|events| json!({ "events": events }))
         .map_err(|_| Errors::new(&[("database", "failed to fetch events")]))
@@ -103,28 +86,29 @@ pub async fn get_events(
     // Ok(format!("events"))
 }
 
-// #[derive(Deserialize)]
-// pub struct UpdateUser {
-//     id: i32,
-//     user: database::events::UpdateUserData,
-// }
+#[derive(Deserialize)]
+pub struct UpdateEvent {
+    id: i32,
+    event: database::events::UpdateEventData,
+}
 
-// #[put("/user", format = "json", data = "<user>")]
-// pub async fn update_user(user: Json<UpdateUser>, db: Db) -> Option<Value> {
-//     db.run(move |conn| database::users::update(conn, user.id, &user.user))
-//         .await
-//         .map(|user| json!({ "user": user }))
-// }
+#[put("/event", format = "json", data = "<event>")]
+pub async fn update_event(event: Json<UpdateEvent>, db: Db) -> Option<Value> {
 
-// #[derive(Deserialize)]
-// pub struct DeleteUser {
-//     id: i32,
-// }
+    db.run(move |conn| database::events::update(conn, event.id, &event.event))
+        .await
+        .map(|event| json!({ "event": event }))
+}
 
-// #[delete("/user", format = "json", data = "<user>")]
-// pub async fn delete_user(user: Json<DeleteUser>, db: Db) -> Result<Value, Errors> {
-//     db.run(move |conn| database::users::delete(conn, user.id))
-//         .await
-//         .map(|_| json!({ "message": "User deleted successfully" }))
-//         .map_err(|_| Errors::new(&[("database", "failed to delete user")]))
-// }
+#[derive(Deserialize)]
+pub struct DeleteEvent {
+    id: i32,
+}
+
+#[delete("/event", format = "json", data = "<event>")]
+pub async fn delete_event(event: Json<DeleteEvent>, db: Db) -> Result<Value, Errors> {
+    db.run(move |conn| database::events::delete(conn, event.id))
+        .await
+        .map(|_| json!({ "message": "event deleted successfully" }))
+        .map_err(|_| Errors::new(&[("database", "failed to delete event")]))
+}

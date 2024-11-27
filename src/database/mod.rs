@@ -1,5 +1,6 @@
 pub mod users;
 pub mod events;
+pub mod likes;
 
 #[database("diesel_postgres_pool")]
 pub struct Db(diesel::PgConnection);

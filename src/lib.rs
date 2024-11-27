@@ -50,6 +50,11 @@ pub fn rocket() -> rocket::Rocket<rocket::Build> {
                 routes::users::delete_user,
                 routes::events::add_event,
                 routes::events::get_events,
+                routes::events::update_event,
+                routes::events::delete_event,
+                routes::likes::like_event,
+                routes::likes::delete_like,
+                routes::likes::get_likes,
             ],
         )
         .attach(database::Db::fairing())
