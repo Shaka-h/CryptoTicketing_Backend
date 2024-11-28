@@ -55,6 +55,7 @@ pub fn rocket() -> rocket::Rocket<rocket::Build> {
                 routes::likes::like_event,
                 routes::likes::delete_like,
                 routes::likes::get_likes,
+                // routes::likes::get_popular_likes
             ],
         )
         .attach(database::Db::fairing())

@@ -18,8 +18,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    likes (id) {
-        id -> Int4,
+    likes (user_id) {
         user_id -> Int4,
         event_id -> Int4,
     }
