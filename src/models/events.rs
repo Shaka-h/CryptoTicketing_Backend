@@ -20,6 +20,8 @@ pub struct Event {
     pub eventcity: String,
     pub eventplace: String,
     pub eventimage: String,
+    pub eventticketprice: i32,
+    pub eventliked: bool,
 }
 
 

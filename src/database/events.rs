@@ -4,7 +4,7 @@ use chrono::{NaiveDate, NaiveDateTime};
 use diesel::deserialize::{self, FromSql, FromSqlRow};
 use diesel::expression::AsExpression;
 use diesel::pg::PgConnection;
-use diesel::result::{DatabaseErrorKind, Error};
+use diesel::result::Error;
 use diesel::serialize::{IsNull, Output, ToSql};
 use diesel::sql_types::Text;
 use diesel::{prelude::*, serialize};
@@ -13,7 +13,6 @@ use std::io::Write;
 
 use rocket::form::FromFormField;
 use std::str::FromStr;
-
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, AsExpression, FromSqlRow, Deserialize, Serialize)]
 #[diesel(sql_type = Text)]
@@ -90,6 +89,8 @@ pub struct NewEvent<'a> {
     pub eventcity: &'a str,
     pub eventplace: &'a str,
     pub eventimage: &'a str,
+    pub eventticketPrice: &'a i32,
+    pub eventliked: bool,
 }
 
 pub enum EventCreationError {
@@ -108,6 +109,7 @@ pub fn create(
     eventcity: &str,
     eventplace: &str,
     eventimage: &str,
+    eventticketPrice: &i32,
 ) -> Result<Event, diesel::result::Error> {
     let new_event = &NewEvent {
         userid,
@@ -120,6 +122,8 @@ pub fn create(
         eventcity,
         eventplace,
         eventimage,
+        eventticketPrice,
+        eventliked: false
     };
 
     diesel::insert_into(events::table)
@@ -184,9 +188,9 @@ pub fn get_events(
 }
 
 pub mod date_format {
-    use serde::{self, Deserialize, Serializer};
-    use chrono::NaiveDateTime;
     use chrono::format::ParseError;
+    use chrono::NaiveDateTime;
+    use serde::{self, Deserialize, Serializer};
 
     const FORMAT: &str = "%Y-%m-%d %H:%M:%S"; // Expected format: "2024-12-25 19:30:00"
 

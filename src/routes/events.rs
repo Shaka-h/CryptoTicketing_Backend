@@ -25,6 +25,8 @@ struct NewEventData {
     eventcity: String,
     eventplace: String,
     eventimage: String,
+    eventticketprice: i32,
+    eventliked: bool,
 }
 
 #[derive(Deserialize)]
@@ -60,6 +62,7 @@ pub async fn add_event(
             &new_event.eventcity,
             &new_event.eventplace,
             &new_event.eventimage,
+            &new_event.eventticketprice,
         )
         .map(|event| json!({ "event": event }))
         .map_err(|_| Errors::new(&[("database", "failed to create event")]))
