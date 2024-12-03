@@ -1,9 +1,13 @@
 use crate::models::likes::{Like, LikesFiltering};
+use crate::routes::likes::LikeRequest;
 use crate::schema::likes;
 use diesel::dsl::count;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel::result::{DatabaseErrorKind, Error};
+use diesel::dsl::exists;
+use diesel::dsl::select;
+use rocket::serde::json::Json;
 
 #[derive(Insertable, Queryable, QueryableByName)]
 #[table_name = "likes"]
@@ -98,6 +102,25 @@ pub fn get_likes(
         Ok(results)
     }
 }
+
+
+
+pub fn is_event_liked_by_user(
+    conn: &mut PgConnection,
+    data: Json<LikeRequest>
+) -> QueryResult<bool> {
+    use crate::schema::likes::dsl::*;
+    // Build the EXISTS query
+    let is_liked_query = select(exists(
+        likes
+            .filter(user_id.eq(data.user_id))
+            .filter(event_id.eq(data.event_id)),
+    ));
+
+    // Execute the query and return the result
+    is_liked_query.get_result(conn)
+}
+
 
 // pub fn get_popular_likes(conn: &mut PgConnection) -> Result<Vec<(Like)>, Error> {
 //     use crate::schema::likes::dsl::*;

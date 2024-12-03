@@ -3,14 +3,12 @@
 use crate::database::{self, events::EventType, users::UserCreationError, Db};
 use crate::errors::{Errors, FieldValidator};
 use crate::models::events::EventFiltering;
-use crate::{config::AppState, models::user::UserFiltering};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::{r2d2::event, Queryable};
 use rocket::serde::{
     json::{json, Json, Value},
-    Deserialize, Serialize,
+    Deserialize,
 };
-use rocket::State;
 
 #[derive(Queryable, Deserialize)]
 struct NewEventData {
@@ -62,7 +60,7 @@ pub async fn add_event(
             &new_event.eventcity,
             &new_event.eventplace,
             &new_event.eventimage,
-            &new_event.eventticketprice,
+            new_event.eventticketprice,
         )
         .map(|event| json!({ "event": event }))
         .map_err(|_| Errors::new(&[("database", "failed to create event")]))

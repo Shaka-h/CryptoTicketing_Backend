@@ -21,7 +21,7 @@ pub struct Event {
     pub eventplace: String,
     pub eventimage: String,
     pub eventticketprice: i32,
-    pub eventliked: bool,
+    pub eventliked: Option<bool>,
 }
 
 

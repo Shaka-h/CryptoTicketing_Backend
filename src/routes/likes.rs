@@ -4,6 +4,7 @@ use crate::database::likes::LikeCreationError;
 use crate::database::{self, Db};
 use crate::errors::Errors;
 use crate::models::likes::LikesFiltering;
+use crate::schema::likes::user_id;
 use diesel::Queryable;
 use rocket::form::error;
 use rocket::serde::{
@@ -63,6 +64,22 @@ pub async fn delete_like(like: Json<DeleteLike>, db: Db) -> Result<Value, Errors
         .await
         .map(|_| json!({ "message": "like deleted successfully" }))
         .map_err(|_| Errors::new(&[("database", "failed to delete like")]))
+}
+
+#[derive(Deserialize)]
+pub struct LikeRequest {
+    pub user_id: i32,
+    pub event_id: i32,
+}
+
+#[post("/is_event_liked_by_user", format = "json", data = "<like_request>")]
+pub async fn is_event_liked_by_user(db: Db, like_request: Json<LikeRequest>) -> Result<Value, Errors> {
+    db.run(move |conn| {
+        database::likes::is_event_liked_by_user(conn, like_request)
+           .map(|is_liked| json!({ "is_liked": is_liked }))
+           .map_err(|_| Errors::new(&[("database", "failed to check if event is liked by user")]))
+    })
+   .await
 }
 
 // #[get("/get_popular_likes?<filters..>")]

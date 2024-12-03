@@ -89,7 +89,7 @@ pub struct NewEvent<'a> {
     pub eventcity: &'a str,
     pub eventplace: &'a str,
     pub eventimage: &'a str,
-    pub eventticketPrice: &'a i32,
+    pub eventticketprice: i32,
     pub eventliked: bool,
 }
 
@@ -109,7 +109,7 @@ pub fn create(
     eventcity: &str,
     eventplace: &str,
     eventimage: &str,
-    eventticketPrice: &i32,
+    eventticket_price: i32,
 ) -> Result<Event, diesel::result::Error> {
     let new_event = &NewEvent {
         userid,
@@ -122,8 +122,8 @@ pub fn create(
         eventcity,
         eventplace,
         eventimage,
-        eventticketPrice,
-        eventliked: false
+        eventticketprice: eventticket_price,
+        eventliked: false,
     };
 
     diesel::insert_into(events::table)
@@ -188,7 +188,6 @@ pub fn get_events(
 }
 
 pub mod date_format {
-    use chrono::format::ParseError;
     use chrono::NaiveDateTime;
     use serde::{self, Deserialize, Serializer};
 
