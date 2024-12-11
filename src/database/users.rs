@@ -112,11 +112,11 @@ pub fn get_users(
         //For example, an integer that might be "null" would be represented as Option<i32> or Option<u32>.
         
         query
-            .limit(5) // Limit to 5 results
+            // .limit(5) // Limit to 5 results
             .load::<User>(conn) // Load results into Vec<User>
     } else {
         let results = users
-            .limit(5)
+            // .limit(5)
             // .select(User::as_select())
             .load::<User>(conn) // Load results into Vec<User>
             .expect("Error loading users");
