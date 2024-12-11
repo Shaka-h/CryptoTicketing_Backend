@@ -15,7 +15,6 @@ diesel::table! {
         eventplace -> Text,
         eventimage -> Text,
         eventticketprice -> Int4,
-        eventliked -> Nullable<Bool>,
     }
 }
 

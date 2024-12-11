@@ -33,19 +33,22 @@ pub struct NewEvent {
 }
 
 #[post("/event", format = "json", data = "<new_event>")]
-pub async fn add_event(
-    new_event: Json<NewEvent>,
-    db: Db,
-) -> Result<Value, Errors> {
+pub async fn add_event(new_event: Json<NewEvent>, db: Db) -> Result<Value, Errors> {
     let new_event = new_event.into_inner().event;
     // Parse `eventdate` into NaiveDate
     let parsed_eventdate = NaiveDate::parse_from_str(&new_event.eventdate, "%Y-%m-%d")
         .map_err(|_| Errors::new(&[("eventdate", "invalid date format, expected YYYY-MM-DD")]))?;
 
     // Parse `eventdatetime` into NaiveDateTime
-    let parsed_eventdatetime = NaiveDateTime::parse_from_str(&new_event.eventdatetime, "%Y-%m-%d %H:%M:%S")
-        .map_err(|_| Errors::new(&[("eventdatetime", "invalid datetime format, expected YYYY-MM-DD HH:MM:SS")]))?;
-
+    let parsed_eventdatetime =
+        NaiveDateTime::parse_from_str(&new_event.eventdatetime, "%Y-%m-%d %H:%M:%S").map_err(
+            |_| {
+                Errors::new(&[(
+                    "eventdatetime",
+                    "invalid datetime format, expected YYYY-MM-DD HH:MM:SS",
+                )])
+            },
+        )?;
 
     db.run(move |conn| {
         database::events::create(
@@ -69,18 +72,12 @@ pub async fn add_event(
 }
 
 #[get("/get_events?<filters..>")]
-pub async fn get_events(
-    db: Db,
-    filters: Option<EventFiltering>
-) -> Result<Value, Errors> {
+pub async fn get_events(db: Db, filters: Option<EventFiltering>) -> Result<Value, Errors> {
     // let filters = filters.map(|f| f.into_inner());
     db.run(move |conn| {
-        database::events::get_events(
-            conn,
-            filters,
-        )
-        .map(|events| json!({ "events": events }))
-        .map_err(|_| Errors::new(&[("database", "failed to fetch events")]))
+        database::events::get_events(conn, filters)
+            .map(|events| json!({ "events": events }))
+            .map_err(|_| Errors::new(&[("database", "failed to fetch events")]))
     })
     .await
 
@@ -95,7 +92,6 @@ pub struct UpdateEvent {
 
 #[put("/event", format = "json", data = "<event>")]
 pub async fn update_event(event: Json<UpdateEvent>, db: Db) -> Option<Value> {
-
     db.run(move |conn| database::events::update(conn, event.id, &event.event))
         .await
         .map(|event| json!({ "event": event }))

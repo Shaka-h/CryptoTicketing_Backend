@@ -13,6 +13,5 @@ CREATE TABLE events (
     eventPlace TEXT NOT NULL,
     eventImage TEXT NOT NULL,
     eventTicketPrice INTEGER NOT NULL,
-    eventLiked BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
 )

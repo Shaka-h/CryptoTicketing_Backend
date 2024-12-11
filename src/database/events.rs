@@ -2,16 +2,17 @@ use crate::models::events::{Event, EventFiltering};
 use crate::schema::events;
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::deserialize::{self, FromSql, FromSqlRow};
+use diesel::dsl::exists;
+use diesel::dsl::select;
 use diesel::expression::AsExpression;
 use diesel::pg::PgConnection;
 use diesel::result::Error;
 use diesel::serialize::{IsNull, Output, ToSql};
 use diesel::sql_types::Text;
 use diesel::{prelude::*, serialize};
+use rocket::form::FromFormField;
 use serde::{Deserialize, Serialize};
 use std::io::Write;
-
-use rocket::form::FromFormField;
 use std::str::FromStr;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, AsExpression, FromSqlRow, Deserialize, Serialize)]
@@ -90,11 +91,33 @@ pub struct NewEvent<'a> {
     pub eventplace: &'a str,
     pub eventimage: &'a str,
     pub eventticketprice: i32,
+}
+
+#[derive(Serialize, Debug)]
+pub struct EventsLogged {
+    pub id: i32,
+    pub userid: i32,
+    pub eventname: String,
+    pub eventdescription: String,
+    pub eventdate: NaiveDate,
+    pub eventdatetime: NaiveDateTime,
+    pub eventtype: EventType,
+    pub eventcountry: String,
+    pub eventcity: String,
+    pub eventplace: String,
+    pub eventimage: String,
+    pub eventticketprice: i32,
     pub eventliked: bool,
 }
 
 pub enum EventCreationError {
     NonExistUsername,
+}
+
+#[derive(Serialize)]
+pub enum EventResult {
+    UserLogged(Vec<EventsLogged>),
+    UnLoggedUser(Vec<Event>),
 }
 
 pub fn create(
@@ -123,7 +146,6 @@ pub fn create(
         eventplace,
         eventimage,
         eventticketprice: eventticket_price,
-        eventliked: false,
     };
 
     diesel::insert_into(events::table)
@@ -135,10 +157,11 @@ pub fn create(
 pub fn get_events(
     conn: &mut PgConnection,
     filters: Option<EventFiltering>,
-) -> Result<Vec<Event>, diesel::result::Error> {
+) -> Result<Vec<EventResult>, diesel::result::Error> {
+// ) -> Result<Vec<EventResult>, diesel::result::Error> {
     use crate::schema::events::dsl::*;
+    use crate::schema::likes::dsl::*;
 
-    println!("filtlers {:?}", filters);
     if let Some(f) = filters {
         let mut query = events.into_boxed();
         if let Some(ref eventname_filter) = f.eventname {
@@ -173,17 +196,74 @@ pub fn get_events(
             query = query.filter(eventtype.eq(eventtype_filter));
         }
 
-        query
-            .limit(5) // Limit to 5 results
-            .load::<Event>(conn) //
-    } else {
-        let results = events
-            .limit(5)
-            // .select(User::as_select())
-            .load::<Event>(conn) // Load results into Vec<User>
-            .expect("Error loading events");
+        let result = query.limit(5).load::<Event>(conn)?;
 
-        Ok(results)
+        let events_logged: Vec<EventsLogged> = result
+            .into_iter()
+            .map(|event| {
+                let is_liked_query = select(exists(
+                    likes
+                        .filter(user_id.eq(event.userid))
+                        .filter(event_id.eq(event.id)),
+                ));
+
+                let is_event_liked = is_liked_query.get_result(conn)?;
+
+                Ok(EventsLogged {
+                    id: event.id,
+                    userid: event.userid,
+                    eventname: event.eventname,
+                    eventdescription: event.eventdescription,
+                    eventdate: event.eventdate,
+                    eventdatetime: event.eventdatetime,
+                    eventcountry: event.eventcountry,
+                    eventcity: event.eventcity,
+                    eventplace: event.eventplace,
+                    eventimage: event.eventimage,
+                    eventtype: event.eventtype,
+                    eventticketprice: event.eventticketprice,
+                    eventliked: is_event_liked,
+                })
+            })
+            .collect::<Result<Vec<EventsLogged>, diesel::result::Error>>()?;
+
+        // let mut events_logged: Vec<EventsLogged> = Vec::new();
+
+
+        // for event in result.into_iter() {
+        //     let is_liked_query = select(exists(
+        //         likes
+        //             .filter(user_id.eq(event.userid))
+        //             .filter(event_id.eq(event.id)),
+        //     ));
+
+
+        //     let is_event_liked = is_liked_query.get_result(conn)?;
+
+        //     events_logged.push(EventsLogged {
+        //         userid: event.userid,
+        //         eventname: event.eventname,
+        //         eventdescription: event.eventdescription,
+        //         eventdate: event.eventdate,
+        //         eventdatetime: event.eventdatetime,
+        //         eventcountry: event.eventcountry,
+        //         eventcity: event.eventcity,
+        //         eventplace: event.eventplace,
+        //         eventimage: event.eventimage,
+        //         eventtype: event.eventtype,
+        //         eventticketprice: event.eventticketprice,
+        //         eventliked: is_event_liked,
+        //     });
+        // }
+
+        // println!("Logged events {:#?}", events_logged);
+
+        // Ok(events_logged)
+        Ok(vec![EventResult::UserLogged(events_logged)])
+    } else {
+        return Ok(vec![EventResult::UnLoggedUser(
+            events.limit(5).load::<Event>(conn)?,
+        )]);
     }
 }
 

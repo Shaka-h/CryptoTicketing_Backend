@@ -7,7 +7,7 @@ use rocket::form::FromForm;
 
 use crate::database::events::EventType;
 
-#[derive(Queryable, Serialize)]
+#[derive(Queryable, Serialize, Deserialize, Debug)]
 pub struct Event {
     pub id: i32,
     pub userid: i32,
@@ -21,7 +21,23 @@ pub struct Event {
     pub eventplace: String,
     pub eventimage: String,
     pub eventticketprice: i32,
-    pub eventliked: Option<bool>,
+}
+
+#[derive(Queryable, Serialize, Deserialize)]
+pub struct EventLogged {
+    pub id: i32,
+    pub userid: i32,
+    pub eventname: String,
+    pub eventdescription: String,
+    pub eventdate: NaiveDate,
+    pub eventdatetime: NaiveDateTime,
+    pub eventtype: EventType,
+    pub eventcountry: String,
+    pub eventcity: String,
+    pub eventplace: String,
+    pub eventimage: String,
+    pub eventticketprice: i32,
+    pub eventliked: bool,
 }
 
 
@@ -36,6 +52,7 @@ pub struct EventFiltering {
     pub eventcity: Option<String>,
     pub eventplace: Option<String>,
     pub limit: Option<i64>,
+    pub logged_user: Option<i32>
 }
 
 #[derive(Serialize)]

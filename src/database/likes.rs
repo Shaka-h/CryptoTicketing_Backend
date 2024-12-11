@@ -1,13 +1,17 @@
+use crate::database::events::EventResult;
+use crate::models::events::Event;
+use crate::schema::events;
 use crate::models::likes::{Like, LikesFiltering};
 use crate::routes::likes::LikeRequest;
 use crate::schema::likes;
-use diesel::dsl::count;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel::result::{DatabaseErrorKind, Error};
 use diesel::dsl::exists;
 use diesel::dsl::select;
 use rocket::serde::json::Json;
+
+use super::events::EventsLogged;
 
 #[derive(Insertable, Queryable, QueryableByName)]
 #[table_name = "likes"]
@@ -76,31 +80,49 @@ pub fn delete(conn: &mut PgConnection, user_id: i32) -> Result<usize, Error> {
 pub fn get_likes(
     conn: &mut PgConnection,
     filters: Option<LikesFiltering>,
-) -> Result<Vec<Like>, diesel::result::Error> {
+) -> Result<Vec<EventsLogged>, diesel::result::Error> {
     use crate::schema::likes::dsl::*;
+    use crate::schema::events::dsl::*;
 
     println!("filtlers {:?}", filters);
-    if let Some(f) = filters {
-        let mut query = likes.into_boxed();
-        if let Some(id_filter) = f.id {
+    let mut query = likes.into_boxed();
+        if let Some(id_filter) = filters.unwrap().id {
             query = query.filter(user_id.eq(id_filter));
         }
-        if let Some(eventid_filter) = f.eventid {
-            query = query.filter(event_id.eq(eventid_filter));
-        }
-        if let Some(limit_filter) = f.limit {
-            query = query.limit(limit_filter);
-        }
+        // if let Some(eventid_filter) = filters.unwrap().eventid {
+        //     query = query.filter(event_id.eq(eventid_filter));
+        // }
+        // if let Some(limit_filter) = filters.unwrap().limit {
+        //     query = query.limit(limit_filter);
+        // }
 
-        query.load::<Like>(conn)
-    } else {
-        let results = likes
-            .limit(5)
-            .load::<Like>(conn)
-            .expect("Error loading likes");
+        let likes_result = query.load::<Like>(conn)?;
 
-        Ok(results)
-    }
+        let event_like_object = likes_result.into_iter().map(|event_like| {
+
+            let event = events
+                .filter(id.eq(event_like.event_id)) // Ensure to filter by event's id
+                .first::<Event>(conn)
+                .unwrap();
+
+            Ok(EventsLogged {
+                id: event.id,
+                userid: event.userid,
+                eventname: event.eventname,
+                eventdescription: event.eventdescription,
+                eventdate: event.eventdate,
+                eventdatetime: event.eventdatetime,
+                eventcountry: event.eventcountry,
+                eventcity: event.eventcity,
+                eventplace: event.eventplace,
+                eventimage: event.eventimage,
+                eventtype: event.eventtype,
+                eventticketprice: event.eventticketprice,
+                eventliked: true,
+            })
+        }).collect::<Result<Vec<EventsLogged>, diesel::result::Error>>()?;
+
+        Ok(event_like_object)
 }
 
 
