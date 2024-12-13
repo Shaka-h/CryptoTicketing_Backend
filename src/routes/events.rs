@@ -3,6 +3,7 @@
 use crate::database::{self, events::EventType, users::UserCreationError, Db};
 use crate::errors::{Errors, FieldValidator};
 use crate::models::events::EventFiltering;
+use crate::uploadFile::upload_image;
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::{r2d2::event, Queryable};
 use rocket::serde::{
@@ -23,8 +24,7 @@ struct NewEventData {
     eventcity: String,
     eventplace: String,
     eventimage: String,
-    eventticketprice: i32,
-    eventliked: bool,
+    eventticketprice: i32
 }
 
 #[derive(Deserialize)]
@@ -50,6 +50,8 @@ pub async fn add_event(new_event: Json<NewEvent>, db: Db) -> Result<Value, Error
             },
         )?;
 
+    // let image_path = upload_image(&new_event.eventimage).await;
+
     db.run(move |conn| {
         database::events::create(
             conn,
@@ -62,7 +64,7 @@ pub async fn add_event(new_event: Json<NewEvent>, db: Db) -> Result<Value, Error
             &new_event.eventcountry,
             &new_event.eventcity,
             &new_event.eventplace,
-            &new_event.eventimage,
+            &image_path.unwrap(),
             new_event.eventticketprice,
         )
         .map(|event| json!({ "event": event }))

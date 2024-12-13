@@ -195,7 +195,7 @@ pub fn get_events(
             query = query.filter(eventtype.eq(eventtype_filter));
         }
 
-        let result = query.limit(5).load::<Event>(conn)?;
+        let result = query.load::<Event>(conn)?;
 
         let events_logged: Vec<EventsLogged> = result
             .into_iter()
@@ -261,7 +261,7 @@ pub fn get_events(
         Ok(vec![EventResult::UserLogged(events_logged)])
     } else {
         return Ok(vec![EventResult::UnLoggedUser(
-            events.limit(5).load::<Event>(conn)?,
+            events.load::<Event>(conn)?,
         )]);
     }
 }

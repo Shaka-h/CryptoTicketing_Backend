@@ -24,6 +24,7 @@ mod errors;
 mod models;
 mod routes;
 mod schema;
+pub mod uploadFile;
 
 #[catch(404)]
 fn not_found() -> Value {
