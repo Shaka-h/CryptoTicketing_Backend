@@ -13,6 +13,8 @@ extern crate diesel;
 #[macro_use]
 extern crate validator_derive;
 
+use rocket::fs::FileServer;
+
 use dotenvy::dotenv;
 
 mod auth;
@@ -58,6 +60,7 @@ pub fn rocket() -> rocket::Rocket<rocket::Build> {
                 routes::likes::is_event_liked_by_user
             ],
         )
+        .mount("/media", FileServer::from("media"))
         .attach(database::Db::fairing())
         .attach(cors_fairing())
         .attach(config::AppState::manage())

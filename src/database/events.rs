@@ -158,7 +158,6 @@ pub fn get_events(
     conn: &mut PgConnection,
     filters: Option<EventFiltering>,
 ) -> Result<Vec<EventResult>, diesel::result::Error> {
-// ) -> Result<Vec<EventResult>, diesel::result::Error> {
     use crate::schema::events::dsl::*;
     use crate::schema::likes::dsl::*;
 

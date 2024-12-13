@@ -27,6 +27,7 @@ pub struct UserFiltering {
 
 #[derive(Serialize)]
 pub struct UserAuth<'a> {
+    id: &'a i32,
     username: &'a str,
     email: &'a str,
     image: Option<&'a str>,
@@ -51,6 +52,7 @@ impl User {
         .token(secret);
 
         UserAuth {
+            id: &self.id,
             username: &self.username,
             email: &self.email,
             image: self.image.as_ref().map(String::as_str),

@@ -24,6 +24,12 @@ impl<T> OffsetLimit for T {
     }
 }
 
+pub struct ResponseObject {
+    id: i32,
+    status: String,
+    code: i32,
+    message: String
+}
 
 #[derive(Debug, Clone, Copy, QueryId)]
 pub struct OffsetLimited<T> {
